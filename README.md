@@ -103,31 +103,35 @@ particularly relevant given the 21.8% cloud cover in the Mid-event scene.
 ---
 
 ## Output Files
-Week9_ARIA_v60_chengzong.ipynb        # Main analysis notebook
-data/
-validation_points.geojson           # 60 instructor-corrected ground-truth points
-output/
-HW_Task1_difference_maps.png        # 2×2 ΔNDVI / ΔNDWI / ΔBSI panels
-HW_Task2_threshold_optimization.png # F1 / PA / UA vs threshold curve
-HW_Task3_confusion_matrix.png       # Confusion matrix heatmap
-HW_Task4_phantom_water.png          # Cloud masking before/after comparison
-HW_Task4_confidence_map.png         # 3-zone confidence map
-.gitignore                            # Excludes .env from version control
+
+- `Week9_ARIA_v60_chengzong.ipynb` — Main analysis notebook
+- `data/validation_points.geojson` — 60 instructor-corrected ground-truth points
+- `output/HW_Task1_difference_maps.png` — 2×2 ΔNDVI / ΔNDWI / ΔBSI panels
+- `output/HW_Task2_threshold_optimization.png` — F1 / PA / UA vs threshold curve
+- `output/HW_Task3_confusion_matrix.png` — Confusion matrix heatmap
+- `output/HW_Task4_phantom_water.png` — Cloud masking before/after comparison
+- `output/HW_Task4_confidence_map.png` — 3-zone confidence map
+- `.gitignore` — Excludes .env from version control
+
 ---
 
 ## Setup / 環境設置
 
 Install dependencies:
 
-    pip install pystac-client stackstac scikit-learn planetary-computer python-dotenv seaborn matplotlib numpy pandas
+```bash
+pip install pystac-client stackstac scikit-learn planetary-computer python-dotenv seaborn matplotlib numpy pandas
+```
 
 Create a `.env` file in the project root (NOT committed to GitHub):
 
-    PRE_ITEM_ID=S2A_MSIL2A_20250615T023141_R046_T51QUG_20250615T070417
-    MID_ITEM_ID=S2C_MSIL2A_20250911T022551_R046_T51QUG_20250911T055914
-    POST_ITEM_ID=S2B_MSIL2A_20251016T022559_R046_T51QUG_20251016T042804
-    THRESHOLD_BEST=-0.55
-    VALIDATION_DATA=data/validation_points.geojson
+```
+PRE_ITEM_ID=S2A_MSIL2A_20250615T023141_R046_T51QUG_20250615T070417
+MID_ITEM_ID=S2C_MSIL2A_20250911T022551_R046_T51QUG_20250911T055914
+POST_ITEM_ID=S2B_MSIL2A_20251016T022559_R046_T51QUG_20251016T042804
+THRESHOLD_BEST=-0.55
+VALIDATION_DATA=data/validation_points.geojson
+```
 
 Run the notebook top to bottom. Loading satellite data takes ~2 minutes.
 
