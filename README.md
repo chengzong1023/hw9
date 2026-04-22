@@ -1,174 +1,136 @@
-\# Week 9 Homework: ARIA v6.0 — The Validated Auditor
+# Week 9 Homework: ARIA v6.0 
 
+## Event Timeline / 事件時間軸
 
+| Date | Event |
+|------|-------|
+| Jun 15, 2025 | Pre-event baseline — dense forest, no anomaly |
+| Aug 2025 | Typhoon Colo triggers landslide → barrier lake forms |
+| Sep 11, 2025 | Lake reaches peak area ~86 ha |
+| Oct 16, 2025 | Lake drained; fresh sediment deposited at Guangfu township |
 
-\*\*Course:\*\* 遙測與空間資訊之分析與應用  
+---
 
-\*\*Institution:\*\* National Taiwan University (NTU)  
+## Reproducible STAC Item IDs
 
-\*\*Student:\*\* 楊承宗  
+| Act | Item ID | Date | Cloud Cover | Key Feature |
+|-----|---------|------|-------------|-------------|
+| PRE  | S2A_MSIL2A_20250615T023141_R046_T51QUG | 2025/06/15 | 1.4%  | Dense forest, no anomaly |
+| MID  | S2C_MSIL2A_20250911T022551_R046_T51QUG | 2025/09/11 | 21.8% | Barrier lake peak ~86 ha |
+| POST | S2B_MSIL2A_20251016T022559_R046_T51QUG | 2025/10/16 | 8.9%  | Lake drained; Guangfu sediment |
 
-\*\*Case Study:\*\* Matai'an Barrier Lake, Hualien, Taiwan (Typhoon Colo, 2025)
+Item IDs are loaded from `.env` file (not committed to GitHub).
 
+---
 
+## Detection Results / 偵測結果
 
-\---
+### Spectral Indices (Task 1)
 
+| Index | Min | Mean | Max | Key Observation |
+|-------|-----|------|-----|-----------------|
+| ΔNDVI Pre→Mid  | -0.886 | -0.027 | 0.686 | Vegetation loss at lake site |
+| ΔNDVI Pre→Post | -0.744 | -0.036 | 0.595 | Persistent loss post-drainage |
+| ΔNDWI Pre→Mid  | -0.544 | +0.019 | 0.970 | Water increase confirmed |
+| ΔBSI  Pre→Mid  | -0.670 | -0.004 | 0.510 | Exposed soil at landslide scar |
 
+### Threshold Optimization (Task 2)
 
-\## Project Overview
+Best ΔNDVI threshold = **-0.55** (F1 = 0.85)  
+Sweep range: -0.05 to -0.75 | Metrics: F1, PA (Recall), UA (Precision)
 
+### Accuracy Assessment (Task 3)
 
+| Metric | Value | Interpretation |
+|--------|-------|----------------|
+| Overall Accuracy | 92.7% | 51/55 valid points correct |
+| Producer's Accuracy | 73.3% | 11/15 real changes detected |
+| User's Accuracy | 100.0% | Zero false alarms |
+| Kappa Coefficient | 0.800 | Substantial agreement |
+| F1 Score | 84.6% | Balanced precision-recall |
 
-This repository contains the Week 9 homework for NTU Remote Sensing course.
+Note: 5 validation points excluded (fell on cloud-masked pixels).
 
-ARIA v6.0 (Automated Remote Imaging Auditor) framework is used to perform
+### Confidence Zones (Task 4)
 
-validated change detection analysis of the Matai'an barrier lake disaster.
+| Zone | Criterion | Area | Action |
+|------|-----------|------|--------|
+| High Confidence | \|ΔNDVI\| > 0.66 | **0.52 km²** | Evacuate immediately |
+| Low Confidence  | 0.55–0.66 | **1.94 km²** | Ground survey required |
+| No Detection    | \|ΔNDVI\| ≤ 0.55 | 417.25 km² | Safe for reconstruction |
+| Cloud Masked    | SCL excluded | 135.20 km² | Reacquire imagery |
 
+---
 
+## Cloud Masking / 雲遮罩
 
-\---
+Mid-event scene had **21.8% cloud cover**.  
+SCL (Scene Classification Layer) masking was applied using clear classes [2,4,5,6,7,11].  
+Without masking, clouds create artificial "phantom water" signals in ΔNDWI.  
+See `HW_Task4_phantom_water.png` for before/after comparison.
 
+---
 
+## AI Diagnostic Log / AI 顧問紀錄
 
-\## Repository Structure
+**Prompt sent to Claude (Anthropic):**
+> Given OA=92.7%, PA=73.3%, UA=100%, Kappa=0.800, High Confidence Area=0.52 km²,
+> what confidence level would you assign to operational decisions?
+> What additional data would improve confidence?
 
-hw9/
+**Key LLM findings:**
+- High Confidence zone → suitable for immediate evacuation orders
+- PA=73.3% is the critical weakness → ~27% of true impact may be missed
+- Recommended improvements: SAR data (cloud-penetrating), larger validation sample (n≥100), UAV survey of Low Confidence zone
 
-├── Week9\_ARIA\_v60\_chengzong.ipynb   # Main notebook
+**My reflection:**  
+The LLM correctly identified PA as the primary risk metric for disaster response,
+consistent with course teaching. The suggestion to integrate Sentinel-1 SAR is
+particularly relevant given the 21.8% cloud cover in the Mid-event scene.
 
-├── data/
+---
 
-│   └── validation\_points.geojson   # 60 ground-truth validation points
+## Week 8 vs Week 9 Comparison
 
-├── output/
-
-│   ├── HW\_Task1\_difference\_maps.png      # ΔNDVI / ΔNDWI / ΔBSI panels
-
-│   ├── HW\_Task2\_threshold\_optimization.png  # F1 / PA / UA vs threshold
-
-│   ├── HW\_Task3\_confusion\_matrix.png     # Confusion matrix heatmap
-
-│   ├── HW\_Task4\_phantom\_water.png        # Cloud masking comparison
-
-│   └── HW\_Task4\_confidence\_map.png       # 3-zone confidence map
-
-├── .gitignore                       # Excludes .env from version control
-
-└── README.md
-
-
-
-\---
-
-
-
-\## Tasks Summary
-
-
-
-| Task | Description | Key Result |
-
-|------|-------------|------------|
-
-| \*\*1\*\* | NDVI / NDWI / BSI change detection | ΔNDWI confirms barrier lake at left-upper AOI |
-
-| \*\*2\*\* | Threshold optimization (F1/PA/UA sweep) | Best ΔNDVI threshold = −0.55, F1 = 0.85 |
-
-| \*\*3\*\* | Confusion matrix \& accuracy assessment | OA=92.7%, PA=73.3%, UA=100%, κ=0.800 |
-
-| \*\*4\*\* | Phantom water + 3-zone confidence map | High Conf. = 0.52 km², Low Conf. = 1.94 km² |
-
-| \*\*5\*\* | ARIA v6.0 validated disaster report | Markdown report with recommendations |
-
-| \*\*6\*\* | AI Advisor — LLM assessment | Claude response + reflection |
-
-| \*\*7\*\* | Week 8 vs Week 9 comparison | Validation confirms W8 visual findings |
-
-
-
-\---
-
-
-
-\## Key Findings
-
-
-
-\- \*\*Best threshold:\*\* ΔNDVI = −0.55 (F1 = 0.85)
-
-\- \*\*Core impact area:\*\* 0.52 km² (High Confidence zone)
-
-\- \*\*Model performance:\*\* UA = 100% (zero false alarms), PA = 73.3% (4 missed pixels)
-
-\- \*\*Cloud masking:\*\* Mid-event scene had 21.8% cloud cover — SCL masking removed phantom water artifacts
-
-\- \*\*Kappa = 0.800:\*\* Substantial agreement, suitable for operational decisions
-
-
-
-\---
-
-
-
-\## Environment Setup
-
-
-
-\### Requirements
-
-```bash
-
-pip install pystac-client stackstac scikit-learn planetary-computer python-dotenv seaborn matplotlib numpy pandas
-
-```
-
-
-
-\### Configuration
+| Layer | W8 Finding | W9 Validated | Agreement |
+|-------|-----------|--------------|-----------|
+| Vegetation Impact | Loss at lake site | ΔNDVI confirms, High Conf. = 0.52 km² | ✅ Yes |
+| Water Inundation | ~86 ha visual estimate | 52 ha validated (UA=100%) | ⚠️ W8 overstated |
+| Debris / Bare Soil | Landslide scar visible | ΔBSI max = +0.51 confirmed | ✅ Yes |
+| Post Recovery | Lake drained Oct 2025 | ΔNDVI Pre→Post = -0.036 (not recovered) | ✅ Yes |
+| Cloud Masking | Not assessed (40% allowed) | 21.8% removed as phantom water | ➕ W9 improves |
+
+---
+
+## Output Files
+Week9_ARIA_v60_chengzong.ipynb        # Main analysis notebook
+data/
+validation_points.geojson           # 60 instructor-corrected ground-truth points
+output/
+HW_Task1_difference_maps.png        # 2×2 ΔNDVI / ΔNDWI / ΔBSI panels
+HW_Task2_threshold_optimization.png # F1 / PA / UA vs threshold curve
+HW_Task3_confusion_matrix.png       # Confusion matrix heatmap
+HW_Task4_phantom_water.png          # Cloud masking before/after comparison
+HW_Task4_confidence_map.png         # 3-zone confidence map
+.gitignore                            # Excludes .env from version control
+---
+
+## Setup / 環境設置
+
+Install dependencies:
+
+    pip install pystac-client stackstac scikit-learn planetary-computer python-dotenv seaborn matplotlib numpy pandas
 
 Create a `.env` file in the project root (NOT committed to GitHub):
 
-PRE\_ITEM\_ID=S2A\_MSIL2A\_20250615T023141\_R046\_T51QUG\_20250615T070417
+    PRE_ITEM_ID=S2A_MSIL2A_20250615T023141_R046_T51QUG_20250615T070417
+    MID_ITEM_ID=S2C_MSIL2A_20250911T022551_R046_T51QUG_20250911T055914
+    POST_ITEM_ID=S2B_MSIL2A_20251016T022559_R046_T51QUG_20251016T042804
+    THRESHOLD_BEST=-0.55
+    VALIDATION_DATA=data/validation_points.geojson
 
-MID\_ITEM\_ID=S2C\_MSIL2A\_20250911T022551\_R046\_T51QUG\_20250911T055914
+Run the notebook top to bottom. Loading satellite data takes ~2 minutes.
 
-POST\_ITEM\_ID=S2B\_MSIL2A\_20251016T022559\_R046\_T51QUG\_20251016T042804
+---
 
-THRESHOLD\_BEST=-0.55
-
-VALIDATION\_DATA=data/validation\_points.geojson
-
-
-
-\### Run
-
-Open `Week9\_ARIA\_v60\_chengzong.ipynb` in Jupyter and run all cells in order.
-
-Note: Loading satellite data (\~2 minutes) requires internet connection.
-
-
-
-\---
-
-
-
-\## Data Sources
-
-
-
-\- \*\*Sentinel-2 L2A\*\* imagery via Microsoft Planetary Computer STAC API
-
-\- \*\*Validation points\*\* provided by instructor (60 field-corrected points)
-
-\- \*\*Study area:\*\* Matai'an, Hualien, Taiwan \[121.28, 23.56, 121.52, 23.76]
-
-
-
-\---
-
-
-
-\*Generated by ARIA v6.0 | NTU Remote Sensing Lab | 2026-04-22\*
-
+*ARIA v6.0 | NTU Remote Sensing Lab | 2026-04-22*
